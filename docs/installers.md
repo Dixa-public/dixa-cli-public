@@ -88,7 +88,15 @@ After install, open a fresh shell and run:
 dixa --version
 ```
 
+Release binaries can also self-update later with:
+
+```bash
+dixa update
+```
+
 ## Notes
 
 - Native installers and fallback scripts depend on published GitHub Release assets.
+- `dixa update` uses GitHub Releases and replaces the current release binary in place when the executable path is writable.
+- If in-place update is not permitted for the current executable path, reinstall with the latest native installer or fallback script instead.
 - Local source builds are still useful for development, but they are not the recommended end-user install path.

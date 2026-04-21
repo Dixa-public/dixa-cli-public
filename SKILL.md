@@ -8,39 +8,47 @@ This skill should use the distributed CLI, not a source build. Because sandbox s
 
 ### macOS sandboxes
 
-Install the current stable release into a session-local directory:
+Install `dixa` into a session-local directory with the bundled installer helper:
 
 ```bash
-export DIXA_VERSION="${DIXA_VERSION:-0.1.1}"
-export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$TMPDIR/dixa-cli-$DIXA_VERSION}"
+export DIXA_VERSION="${DIXA_VERSION:-}"
+export DIXA_SESSION_LABEL="${DIXA_SESSION_LABEL:-${DIXA_VERSION:-latest}}"
+export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$TMPDIR/dixa-cli-$DIXA_SESSION_LABEL}"
 mkdir -p "$DIXA_SESSION_DIR/bin"
-curl -fsSL https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.sh | \
-  INSTALL_DIR="$DIXA_SESSION_DIR/bin" DIXA_VERSION="$DIXA_VERSION" bash
+
+if [[ -n "$DIXA_VERSION" ]]; then
+  INSTALL_DIR="$DIXA_SESSION_DIR/bin" DIXA_VERSION="$DIXA_VERSION" ./scripts/install.sh
+else
+  INSTALL_DIR="$DIXA_SESSION_DIR/bin" ./scripts/install.sh
+fi
+
 export DIXA_BIN="$DIXA_SESSION_DIR/bin/dixa"
 "$DIXA_BIN" --version
 ```
 
 ### Windows sandboxes
 
-Use the published GitHub release zip:
+Install `dixa` into a session-local directory with the bundled installer helper:
 
 ```powershell
-$env:DIXA_VERSION = "0.1.0"
-switch ($env:PROCESSOR_ARCHITECTURE.ToLower()) {
-  "arm64" { $DIXA_ARCH = "arm64" }
-  default { $DIXA_ARCH = "amd64" }
+$env:DIXA_VERSION = if ($env:DIXA_VERSION) { $env:DIXA_VERSION } else { "" }
+$env:DIXA_SESSION_LABEL = if ($env:DIXA_SESSION_LABEL) {
+  $env:DIXA_SESSION_LABEL
+} elseif ($env:DIXA_VERSION) {
+  $env:DIXA_VERSION
+} else {
+  "latest"
+}
+$env:DIXA_SESSION_DIR = if ($env:DIXA_SESSION_DIR) {
+  $env:DIXA_SESSION_DIR
+} else {
+  Join-Path $env:TEMP "dixa-cli-$env:DIXA_SESSION_LABEL"
 }
 
-$DixaDir = Join-Path $env:TEMP "dixa-cli-$env:DIXA_VERSION"
-New-Item -ItemType Directory -Force -Path $DixaDir | Out-Null
+$env:INSTALL_DIR = Join-Path $env:DIXA_SESSION_DIR "bin"
+& ./scripts/install.ps1
 
-$DixaZip = Join-Path $DixaDir "dixa.zip"
-Invoke-WebRequest `
-  -Uri "https://github.com/Dixa-public/dixa-cli-public/releases/download/v$env:DIXA_VERSION/dixa_$env:DIXA_VERSION`_windows_$DIXA_ARCH.zip" `
-  -OutFile $DixaZip
-
-Expand-Archive -Force -Path $DixaZip -DestinationPath $DixaDir
-$env:DIXA_BIN = Join-Path $DixaDir "dixa.exe"
+$env:DIXA_BIN = Join-Path $env:INSTALL_DIR "dixa.exe"
 & $env:DIXA_BIN --version
 ```
 
@@ -66,6 +74,8 @@ export DIXA_BASE_URL="https://dev.dixa.io/v1"
 Always run the CLI with JSON output inside the skill.
 
 Use `"$DIXA_BIN"` for commands inside the skill. Do not assume `dixa` is globally available even after install.
+
+Run the bootstrap snippets from the directory that contains this `SKILL.md`, so the relative `./scripts/install.sh` and `./scripts/install.ps1` paths resolve correctly.
 
 Do not ask the user for IDs if you can discover them with `list` or `get` commands first.
 

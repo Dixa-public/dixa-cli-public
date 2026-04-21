@@ -7,6 +7,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/spf13/cobra v1.10.2
 	github.com/zalando/go-keyring v0.2.8
+	golang.org/x/mod v0.17.0
 	golang.org/x/term v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 )

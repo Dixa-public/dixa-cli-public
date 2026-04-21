@@ -56,6 +56,7 @@ release:
   prerelease: auto
   extra_files:
     - glob: .release-extra/*.pkg
+    - glob: .release-extra/skill-v*.zip
   github:
     owner: Dixa-public
     name: dixa-cli-public

@@ -2,7 +2,9 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/Dixa-public/dixa-cli-public/internal/config"
 	"github.com/Dixa-public/dixa-cli-public/internal/spec"
+	"github.com/Dixa-public/dixa-cli-public/internal/update"
 )
 
 type integrationStore struct{}
@@ -32,11 +35,13 @@ func testEnv(t *testing.T) *Env {
 		Spec:        manifest,
 		Config:      config.NewManager(home, integrationStore{}),
 		HTTPClient:  &http.Client{Timeout: 2 * time.Second},
+		Updater:     nil,
 		Stdin:       strings.NewReader(""),
 		Stdout:      &bytes.Buffer{},
 		Stderr:      &bytes.Buffer{},
 		IsStdoutTTY: false,
 		IsStdinTTY:  false,
+		Version:     "0.1.2",
 	}
 }
 
@@ -533,11 +538,13 @@ func TestAuthShowUsesMaskedKey(t *testing.T) {
 		Spec:        manifest,
 		Config:      manager,
 		HTTPClient:  &http.Client{},
+		Updater:     nil,
 		Stdin:       strings.NewReader(""),
 		Stdout:      &bytes.Buffer{},
 		Stderr:      &bytes.Buffer{},
 		IsStdoutTTY: false,
 		IsStdinTTY:  false,
+		Version:     "0.1.2",
 	}
 
 	stdout, _, err := executeCLI(t, env, "--output", "json", "auth", "show")
@@ -546,6 +553,162 @@ func TestAuthShowUsesMaskedKey(t *testing.T) {
 	}
 	if !strings.Contains(stdout, `"api_key": "sup******ret"`) {
 		t.Fatalf("expected masked API key, got %s", stdout)
+	}
+}
+
+func TestUpdateCommandUsesUpdaterWithoutAPIKey(t *testing.T) {
+	env := testEnv(t)
+	env.Updater = &fakeUpdater{
+		updateFn: func(ctx context.Context, currentVersion string) (update.UpdateResult, error) {
+			return update.UpdateResult{
+				Status:         "updated",
+				Message:        "Updated dixa to 0.1.3.",
+				CurrentVersion: currentVersion,
+				LatestVersion:  "0.1.3",
+				LatestTag:      "v0.1.3",
+				ExecutablePath: "/usr/local/bin/dixa",
+			}, nil
+		},
+	}
+
+	stdout, stderr, err := executeCLI(t, env, "--output", "json", "update")
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if stderr != "" {
+		t.Fatalf("expected no stderr, got %s", stderr)
+	}
+	if !strings.Contains(stdout, `"status": "updated"`) || !strings.Contains(stdout, `"latest_version": "0.1.3"`) {
+		t.Fatalf("unexpected update output: %s", stdout)
+	}
+}
+
+func TestUpdateNoticeAppearsOnEligibleCommands(t *testing.T) {
+	env := testEnv(t)
+	env.Updater = &fakeUpdater{
+		checkFn: func(ctx context.Context, currentVersion string) (update.CheckResult, error) {
+			return update.CheckResult{
+				CurrentVersion:  currentVersion,
+				LatestVersion:   "0.1.3",
+				LatestTag:       "v0.1.3",
+				UpdateAvailable: true,
+			}, nil
+		},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"data":{"id":"org-1","name":"Acme"}}`))
+	}))
+	defer server.Close()
+
+	stdout, stderr, err := executeCLI(t, env, "--api-key", "test-key", "--base-url", server.URL, "--output", "json", "org", "get")
+	if err != nil {
+		t.Fatalf("org get: %v", err)
+	}
+	if !json.Valid([]byte(stdout)) {
+		t.Fatalf("expected stdout to remain valid JSON, got %s", stdout)
+	}
+	if !strings.Contains(stderr, "Run 'dixa update' to install it.") {
+		t.Fatalf("expected update notice in stderr, got %s", stderr)
+	}
+}
+
+func TestUpdateNoticeSkipsHelpCompletionVersionAndUpdate(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{name: "help command", args: []string{"help"}},
+		{name: "completion", args: []string{"completion", "bash"}},
+		{name: "version flag", args: []string{"--version"}},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			env := testEnv(t)
+			fake := &fakeUpdater{
+				checkFn: func(ctx context.Context, currentVersion string) (update.CheckResult, error) {
+					return update.CheckResult{
+						CurrentVersion:  currentVersion,
+						LatestVersion:   "0.1.3",
+						UpdateAvailable: true,
+					}, nil
+				},
+			}
+			env.Updater = fake
+
+			_, stderr, err := executeCLI(t, env, tt.args...)
+			if err != nil {
+				t.Fatalf("%s: %v", tt.name, err)
+			}
+			if fake.checkCalls != 0 {
+				t.Fatalf("expected no update check calls, got %d", fake.checkCalls)
+			}
+			if strings.Contains(stderr, "Run 'dixa update'") {
+				t.Fatalf("expected no update notice, got %s", stderr)
+			}
+		})
+	}
+
+	env := testEnv(t)
+	fake := &fakeUpdater{
+		checkFn: func(ctx context.Context, currentVersion string) (update.CheckResult, error) {
+			return update.CheckResult{
+				CurrentVersion:  currentVersion,
+				LatestVersion:   "0.1.3",
+				UpdateAvailable: true,
+			}, nil
+		},
+		updateFn: func(ctx context.Context, currentVersion string) (update.UpdateResult, error) {
+			return update.UpdateResult{
+				Status:         "up_to_date",
+				Message:        "dixa is already up to date.",
+				CurrentVersion: currentVersion,
+				LatestVersion:  currentVersion,
+				LatestTag:      "v" + currentVersion,
+			}, nil
+		},
+	}
+	env.Updater = fake
+
+	_, stderr, err := executeCLI(t, env, "--output", "json", "update")
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if fake.checkCalls != 0 {
+		t.Fatalf("expected no check call for update command, got %d", fake.checkCalls)
+	}
+	if fake.updateCalls != 1 {
+		t.Fatalf("expected one update call, got %d", fake.updateCalls)
+	}
+	if strings.Contains(stderr, "Run 'dixa update'") {
+		t.Fatalf("expected no update notice during update command, got %s", stderr)
+	}
+}
+
+func TestUpdateCheckFailureDoesNotFailCommand(t *testing.T) {
+	env := testEnv(t)
+	env.Updater = &fakeUpdater{
+		checkFn: func(ctx context.Context, currentVersion string) (update.CheckResult, error) {
+			return update.CheckResult{}, errors.New("boom")
+		},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"data":{"id":"org-1"}}`))
+	}))
+	defer server.Close()
+
+	stdout, stderr, err := executeCLI(t, env, "--api-key", "test-key", "--base-url", server.URL, "--output", "json", "org", "get")
+	if err != nil {
+		t.Fatalf("org get: %v", err)
+	}
+	if !strings.Contains(stdout, `"id": "org-1"`) {
+		t.Fatalf("unexpected stdout: %s", stdout)
+	}
+	if strings.Contains(stderr, "Run 'dixa update'") {
+		t.Fatalf("expected no update notice, got %s", stderr)
 	}
 }
 
@@ -572,4 +735,27 @@ func (a *authStore) Set(profile, value string) error {
 func (a *authStore) Delete(profile string) error {
 	delete(a.values, profile)
 	return nil
+}
+
+type fakeUpdater struct {
+	checkCalls  int
+	updateCalls int
+	checkFn     func(context.Context, string) (update.CheckResult, error)
+	updateFn    func(context.Context, string) (update.UpdateResult, error)
+}
+
+func (f *fakeUpdater) Check(ctx context.Context, currentVersion string) (update.CheckResult, error) {
+	f.checkCalls++
+	if f.checkFn != nil {
+		return f.checkFn(ctx, currentVersion)
+	}
+	return update.CheckResult{}, nil
+}
+
+func (f *fakeUpdater) SelfUpdate(ctx context.Context, currentVersion string) (update.UpdateResult, error) {
+	f.updateCalls++
+	if f.updateFn != nil {
+		return f.updateFn(ctx, currentVersion)
+	}
+	return update.UpdateResult{}, nil
 }

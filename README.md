@@ -55,12 +55,22 @@ Direct archive download:
 
 Download the latest release archive from [GitHub Releases](https://github.com/Dixa-public/dixa-cli-public/releases), unpack it, and place `dixa` somewhere on your `PATH`.
 
+Installed release binaries can also self-update with:
+
+```bash
+dixa update
+```
+
+`dixa` checks for newer stable releases at most once every 24 hours and prints a quiet stderr notice when an update is available. It never interrupts command success or changes stdout output.
+
 ## Getting Started
 
 Start here for install, auth, first commands, and troubleshooting:
 
 - [docs/getting-started.md](./docs/getting-started.md)
 - [docs/command-examples.md](./docs/command-examples.md)
+
+If you want a self-contained agent bundle for sandboxed AI workflows, each GitHub Release also includes `skill-v<version>.zip`.
 
 ## Quick Start
 
@@ -105,6 +115,12 @@ dixa --yes tags add --name vip --color red
 
 ```bash
 dixa auth show
+```
+
+### 5. Update to the latest stable release
+
+```bash
+dixa update
 ```
 
 ## Global Flags
@@ -169,11 +185,12 @@ Only move to `unaggregated-data` when aggregated output is insufficient.
 ## Repo Guide
 
 - [SKILL.md](./SKILL.md): canonical agent-oriented skill guide for sandboxed `dixa` usage
+- `skill-v<version>.zip`: release-bundled copy of the skill with local install scripts and a matching default CLI version
 - [docs/getting-started.md](./docs/getting-started.md): setup, auth, examples, and troubleshooting
 - [docs/command-examples.md](./docs/command-examples.md): structured example commands for the full CLI surface
 - [docs/installers.md](./docs/installers.md): default macOS `.pkg` and Windows `.exe` installer flows, plus fallbacks
 - [docs/parity-matrix.md](./docs/parity-matrix.md): generated surface parity table
-- [docs/releasing.md](./docs/releasing.md): GitHub Releases and native installer release flow
+- [docs/releasing.md](./docs/releasing.md): GitHub Releases, native installers, and the Claude skill bundle release flow
 
 ## Development
 

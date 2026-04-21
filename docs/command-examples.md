@@ -29,6 +29,13 @@ Print the installed CLI version.
 dixa --version
 ```
 
+### `dixa update`
+Install the latest stable release over the current release binary.
+
+```bash
+dixa update
+```
+
 ### `dixa <group> --help`
 Inspect the commands available in a command group.
 

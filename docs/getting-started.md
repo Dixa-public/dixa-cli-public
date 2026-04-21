@@ -4,6 +4,8 @@
 
 If you want a broader cookbook with one example for every command group and subcommand, see [command-examples.md](./command-examples.md).
 
+If you are setting up `dixa` inside a sandboxed AI tool, the matching GitHub Release also includes `skill-v<version>.zip`.
+
 ## 1. Install `dixa`
 
 ### Preferred native installer
@@ -42,6 +44,12 @@ Confirm the install:
 
 ```bash
 dixa --version
+```
+
+Update to the latest stable release later with:
+
+```bash
+dixa update
 ```
 
 ## 2. Choose an auth method
@@ -190,6 +198,13 @@ dixa analytics aggregated-data \
 
 - this is expected for plain local builds
 - distributed release binaries should report a real semver like `0.1.0`
+- `dixa update` only works on release binaries, not local `dev` builds
+
+### Update notice after commands
+
+- `dixa` may print a quiet stderr notice when a newer stable release is available
+- the notice is non-blocking and does not change stdout output
+- run `dixa update` to install the latest stable release
 
 ### No Keychain access
 

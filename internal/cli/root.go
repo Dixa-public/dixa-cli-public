@@ -18,6 +18,7 @@ import (
 	"github.com/Dixa-public/dixa-cli-public/internal/confirm"
 	"github.com/Dixa-public/dixa-cli-public/internal/output"
 	"github.com/Dixa-public/dixa-cli-public/internal/spec"
+	"github.com/Dixa-public/dixa-cli-public/internal/update"
 )
 
 var version = "dev"
@@ -27,11 +28,13 @@ type Env struct {
 	Spec        spec.Manifest
 	Config      *config.Manager
 	HTTPClient  *http.Client
+	Updater     update.Service
 	Stdin       io.Reader
 	Stdout      io.Writer
 	Stderr      io.Writer
 	IsStdoutTTY bool
 	IsStdinTTY  bool
+	Version     string
 }
 
 type rootFlags struct {
@@ -57,23 +60,50 @@ func NewDefaultEnv() (*Env, error) {
 		Spec:        manifest,
 		Config:      config.NewManager(home, config.KeyringStore{Service: config.ServiceName}),
 		HTTPClient:  &http.Client{Timeout: 30 * time.Second},
+		Updater:     update.NewManager(home, &http.Client{Timeout: update.DefaultHTTPTimeout}),
 		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
 		IsStdoutTTY: term.IsTerminal(int(os.Stdout.Fd())),
 		IsStdinTTY:  term.IsTerminal(int(os.Stdin.Fd())),
+		Version:     version,
 	}, nil
 }
 
 func NewRootCmd(env *Env) *cobra.Command {
 	flags := &rootFlags{}
+	pendingUpdateNotice := ""
 	cmd := &cobra.Command{
 		Use:           "dixa",
 		Short:         "Terminal CLI for the Dixa API",
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		Version:       version,
+		Version:       cliVersion(env),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			pendingUpdateNotice = ""
+			if env == nil || env.Updater == nil || !shouldAutoCheckForUpdates(cmd, cliVersion(env)) {
+				return nil
+			}
+
+			result, err := env.Updater.Check(commandContext(cmd), cliVersion(env))
+			if err == nil && result.UpdateAvailable {
+				pendingUpdateNotice = fmt.Sprintf(
+					"A newer dixa version is available: %s (current %s). Run 'dixa update' to install it.",
+					result.LatestVersion,
+					result.CurrentVersion,
+				)
+			}
+			return nil
+		},
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			if pendingUpdateNotice != "" {
+				_, _ = fmt.Fprintln(env.Stderr, pendingUpdateNotice)
+			}
+			return nil
+		},
 	}
+	cmd.SetOut(env.Stdout)
+	cmd.SetErr(env.Stderr)
 
 	cmd.PersistentFlags().StringVar(&flags.Profile, "profile", "", "Profile name from ~/.config/dixa/config.toml")
 	cmd.PersistentFlags().StringVar(&flags.BaseURL, "base-url", "", "Override the Dixa API base URL")
@@ -82,7 +112,7 @@ func NewRootCmd(env *Env) *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&flags.Debug, "debug", false, "Print redacted request and response debug logs to stderr")
 	cmd.PersistentFlags().BoolVar(&flags.Yes, "yes", false, "Skip interactive confirmation for mutating commands")
 
-	cmd.AddCommand(newAuthCmd(env, flags))
+	cmd.AddCommand(newAuthCmd(env, flags), newUpdateCmd(env, flags))
 
 	groupCommands := map[string]*cobra.Command{}
 	for _, domain := range env.Spec.Domains {
@@ -105,6 +135,33 @@ func NewRootCmd(env *Env) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func newUpdateCmd(env *Env, flags *rootFlags) *cobra.Command {
+	return &cobra.Command{
+		Use:   "update",
+		Short: "Install the latest stable dixa release over the current binary",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if env == nil || env.Updater == nil {
+				return fmt.Errorf("dixa update is unavailable in this environment")
+			}
+
+			result, err := env.Updater.SelfUpdate(commandContext(cmd), cliVersion(env))
+			if err != nil {
+				return err
+			}
+
+			return renderResult(env, resolveOutput(flags, env), map[string]any{
+				"status":          result.Status,
+				"message":         result.Message,
+				"current_version": result.CurrentVersion,
+				"latest_version":  result.LatestVersion,
+				"latest_tag":      result.LatestTag,
+				"executable_path": result.ExecutablePath,
+				"scheduled":       result.Scheduled,
+			})
+		},
+	}
 }
 
 func newAuthCmd(env *Env, flags *rootFlags) *cobra.Command {
@@ -321,6 +378,44 @@ func resolveOutput(flags *rootFlags, env *Env) string {
 func renderResult(env *Env, requestedFormat string, result any) error {
 	format := output.ResolveFormat(requestedFormat, env.IsStdoutTTY)
 	return output.Render(env.Stdout, format, result)
+}
+
+func commandContext(cmd *cobra.Command) context.Context {
+	if cmd != nil && cmd.Context() != nil {
+		return cmd.Context()
+	}
+	return context.Background()
+}
+
+func cliVersion(env *Env) string {
+	if env != nil && strings.TrimSpace(env.Version) != "" {
+		return strings.TrimSpace(env.Version)
+	}
+	return version
+}
+
+func shouldAutoCheckForUpdates(cmd *cobra.Command, currentVersion string) bool {
+	if !update.IsReleaseVersion(currentVersion) {
+		return false
+	}
+	if cmd == nil {
+		return false
+	}
+	if flag := cmd.Flags().Lookup("help"); flag != nil && flag.Changed {
+		return false
+	}
+	if root := cmd.Root(); root != nil {
+		if flag := root.Flags().Lookup("version"); flag != nil && flag.Changed {
+			return false
+		}
+	}
+	for current := cmd; current != nil; current = current.Parent() {
+		switch current.Name() {
+		case "update", "help", "completion":
+			return false
+		}
+	}
+	return true
 }
 
 func orderChildren(cmd *cobra.Command) {

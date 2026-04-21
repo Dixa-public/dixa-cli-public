@@ -1,6 +1,7 @@
 .DS_Store
 .cowork/
 /dixa
+/dixa.exe
 /dixa-dashboard.html
 /top-agents-last-30d.csv
 bin/

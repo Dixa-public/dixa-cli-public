@@ -35,6 +35,7 @@ Local builds default to `dev` because the version is injected only during releas
 5. Verify the GitHub Release contains:
    - `dixa-<version>-macos-universal.pkg`
    - `dixa-installer_<version>_windows_<arch>.exe`
+   - `skill-v<version>.zip`
    - the macOS tarballs
    - the Windows zip archives
    - `checksums.txt`
@@ -48,6 +49,7 @@ Local builds default to `dev` because the version is injected only during releas
    ```bash
    dixa --version
    dixa --help
+   dixa update
    ```
 
    Windows `.exe`:
@@ -59,6 +61,8 @@ Local builds default to `dev` because the version is injected only during releas
    dixa --version
    dixa --help
    ```
+
+   `dixa update` should either report that the binary is already current or, when a newer stable release exists, update the installed release binary in place.
 
 7. Verify the fallback installers still resolve and download the matching release assets.
 
@@ -79,6 +83,20 @@ Local builds default to `dev` because the version is injected only during releas
    dixa --help
    ```
 
+8. Verify the Claude skill bundle is self-contained:
+
+   ```bash
+   unzip -l skill-v<version>.zip
+   ```
+
+   Confirm the archive contains:
+
+   - `dixa/SKILL.md`
+   - `dixa/scripts/install.sh`
+   - `dixa/scripts/install.ps1`
+
+   Then extract it and confirm the bundled skill defaults to the matching CLI version unless `DIXA_VERSION` is overridden.
+
 ## Snapshot Validation
 
 From the real git checkout, run:
@@ -86,17 +104,23 @@ From the real git checkout, run:
 ```bash
 rm -rf .release-extra
 VERSION=0.1.0 OUTPUT_DIR=.release-extra ./scripts/build-macos-pkg.sh
+VERSION=0.1.0 OUTPUT_DIR=.release-extra ./scripts/build-claude-skill-zip.sh
 goreleaser release --snapshot --clean
 ```
 
 Validate that:
 
 - the macOS `.pkg` is created in `.release-extra/`
+- the Claude skill zip is created in `.release-extra/`
 - archives are produced for `darwin/amd64`, `darwin/arm64`, `windows/amd64`, and `windows/arm64`
 - Windows installer executables are produced for `windows/amd64` and `windows/arm64`
 - `checksums.txt` is generated
 - Windows archives are emitted as `.zip`
 - the built binary reports the injected version rather than `dev`
+- `unzip -l .release-extra/skill-v0.1.0.zip` shows:
+  - `dixa/SKILL.md`
+  - `dixa/scripts/install.sh`
+  - `dixa/scripts/install.ps1`
 
 ## Prereleases
 
