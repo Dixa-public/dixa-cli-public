@@ -1,0 +1,80 @@
+project_name: dixa
+
+before:
+  hooks:
+    - go test ./...
+
+builds:
+  - id: dixa
+    binary: dixa
+    main: ./cmd/dixa
+    goos:
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/Dixa-public/dixa-cli-public/internal/cli.version={{.Version}}
+  - id: dixa-installer
+    binary: dixa-installer
+    main: ./cmd/dixa-installer
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.repo=Dixa-public/dixa-cli-public
+
+archives:
+  - id: dixa-archive
+    ids:
+      - dixa
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+  - id: dixa-installer-binary
+    ids:
+      - dixa-installer
+    formats:
+      - binary
+    name_template: >-
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if eq .Os "windows" }}.exe{{ end }}
+
+checksum:
+  name_template: checksums.txt
+
+brews:
+  - repository:
+      owner: Dixa-public
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/Dixa-public/dixa-cli-public
+    description: Terminal CLI for the Dixa API
+    license: MIT
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} {{ .Tag }}"
+    skip_upload: auto
+    test: |
+      system "#{bin}/dixa", "--help"
+    install: |
+      bin.install "dixa"
+      generate_completions_from_executable(bin/"dixa", "completion")
+
+release:
+  prerelease: auto
+  extra_files:
+    - glob: dist/*.pkg
+  github:
+    owner: Dixa-public
+    name: dixa-cli-public
+
+changelog:
+  use: git

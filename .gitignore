@@ -1,0 +1,8 @@
+.DS_Store
+.cowork/
+/dixa
+/dixa-dashboard.html
+/top-agents-last-30d.csv
+bin/
+dist/
+coverage.out
