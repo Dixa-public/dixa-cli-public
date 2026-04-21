@@ -37,6 +37,7 @@ Local builds default to `dev` because the version is injected only during releas
    - `dixa-installer_<version>_windows_<arch>.exe`
    - `skill-v<version>.zip`
    - the macOS tarballs
+   - the Linux tarballs
    - the Windows zip archives
    - `checksums.txt`
 6. Verify the native installers work as the default install paths:
@@ -112,7 +113,7 @@ Validate that:
 
 - the macOS `.pkg` is created in `.release-extra/`
 - the Claude skill zip is created in `.release-extra/`
-- archives are produced for `darwin/amd64`, `darwin/arm64`, `windows/amd64`, and `windows/arm64`
+- archives are produced for `darwin/amd64`, `darwin/arm64`, `linux/amd64`, `linux/arm64`, `windows/amd64`, and `windows/arm64`
 - Windows installer executables are produced for `windows/amd64` and `windows/arm64`
 - `checksums.txt` is generated
 - Windows archives are emitted as `.zip`

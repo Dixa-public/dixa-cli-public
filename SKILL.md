@@ -18,7 +18,29 @@ Install `dixa` into a session-local directory with the bundled installer helper:
 ```bash
 export DIXA_VERSION="${DIXA_VERSION:-}"
 export DIXA_SESSION_LABEL="${DIXA_SESSION_LABEL:-${DIXA_VERSION:-latest}}"
-export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$TMPDIR/dixa-cli-$DIXA_SESSION_LABEL}"
+export DIXA_TMP_ROOT="${DIXA_TMP_ROOT:-${TMPDIR:-/tmp}}"
+export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$DIXA_TMP_ROOT/dixa-cli-$DIXA_SESSION_LABEL}"
+mkdir -p "$DIXA_SESSION_DIR/bin"
+
+if [[ -n "$DIXA_VERSION" ]]; then
+  INSTALL_DIR="$DIXA_SESSION_DIR/bin" DIXA_VERSION="$DIXA_VERSION" ./scripts/install.sh
+else
+  INSTALL_DIR="$DIXA_SESSION_DIR/bin" ./scripts/install.sh
+fi
+
+export DIXA_BIN="$DIXA_SESSION_DIR/bin/dixa"
+"$DIXA_BIN" --version
+```
+
+### Linux sandboxes
+
+Install `dixa` into a session-local directory with the bundled installer helper:
+
+```bash
+export DIXA_VERSION="${DIXA_VERSION:-}"
+export DIXA_SESSION_LABEL="${DIXA_SESSION_LABEL:-${DIXA_VERSION:-latest}}"
+export DIXA_TMP_ROOT="${DIXA_TMP_ROOT:-${TMPDIR:-/tmp}}"
+export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$DIXA_TMP_ROOT/dixa-cli-$DIXA_SESSION_LABEL}"
 mkdir -p "$DIXA_SESSION_DIR/bin"
 
 if [[ -n "$DIXA_VERSION" ]]; then

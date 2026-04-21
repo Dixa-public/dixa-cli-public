@@ -12,6 +12,7 @@ builds:
     main: ./cmd/dixa
     goos:
       - darwin
+      - linux
       - windows
     goarch:
       - amd64

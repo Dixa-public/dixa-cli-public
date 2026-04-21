@@ -15,6 +15,8 @@ Use the installer asset attached to the release for your platform:
 - macOS: `dixa-<version>-macos-universal.pkg`
 - Windows: `dixa-installer_<version>_windows_<arch>.exe`
 
+Linux currently uses the release archive or shell installer fallback instead of a native installer.
+
 For installer behavior details and platform-specific notes, see [installers.md](./installers.md).
 
 ### Fallback options
@@ -25,7 +27,7 @@ PowerShell + GitHub (Windows fallback):
 irm https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.ps1 | iex
 ```
 
-Shell + GitHub (macOS fallback):
+Shell + GitHub (macOS/Linux fallback):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.sh | bash

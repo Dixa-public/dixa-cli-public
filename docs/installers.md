@@ -58,6 +58,8 @@ This fallback:
 
 ### Shell + GitHub (macOS fallback)
 
+This fallback also supports Linux.
+
 Install the latest release:
 
 ```bash
@@ -73,7 +75,7 @@ curl -fsSL https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/sc
 This fallback:
 
 - resolves the latest release unless `DIXA_VERSION` is set
-- downloads the matching macOS archive for `arm64` or `amd64`
+- downloads the matching macOS or Linux archive for `arm64` or `amd64`
 - installs `dixa` into `/usr/local/bin` when writable, otherwise `~/.local/bin`
 
 ### Direct archive download

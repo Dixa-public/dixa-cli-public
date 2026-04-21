@@ -22,6 +22,7 @@ require_tool tar
 
 case "$(uname -s)" in
   Darwin) DIXA_OS="darwin" ;;
+  Linux) DIXA_OS="linux" ;;
   *)
     echo "unsupported OS: $(uname -s)" >&2
     echo "use scripts/install.ps1 on Windows, or install manually from GitHub Releases" >&2

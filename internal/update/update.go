@@ -182,7 +182,13 @@ func (m *Manager) SelfUpdate(ctx context.Context, currentVersion string) (Update
 
 	switch m.goos() {
 	case "darwin":
-		if err := m.replaceDarwinBinary(executablePath, archive); err != nil {
+		if err := m.replaceUnixBinary(executablePath, archive); err != nil {
+			return result, err
+		}
+		result.Status = "updated"
+		result.Message = fmt.Sprintf("Updated dixa to %s.", latest.Version)
+	case "linux":
+		if err := m.replaceUnixBinary(executablePath, archive); err != nil {
 			return result, err
 		}
 		result.Status = "updated"
@@ -280,7 +286,7 @@ func (m *Manager) downloadReleaseAsset(ctx context.Context, tag, assetName strin
 	return archive, nil
 }
 
-func (m *Manager) replaceDarwinBinary(executablePath string, archive []byte) error {
+func (m *Manager) replaceUnixBinary(executablePath string, archive []byte) error {
 	binary, err := extractTarGzFile(archive, "dixa")
 	if err != nil {
 		return err
@@ -365,6 +371,11 @@ func (m *Manager) archiveName(version string) (string, error) {
 			return "", fmt.Errorf("dixa update is not supported on %s/%s", m.goos(), m.goarch())
 		}
 		return fmt.Sprintf("dixa_%s_darwin_%s.tar.gz", version, m.goarch()), nil
+	case "linux":
+		if !supportedArch(m.goarch()) {
+			return "", fmt.Errorf("dixa update is not supported on %s/%s", m.goos(), m.goarch())
+		}
+		return fmt.Sprintf("dixa_%s_linux_%s.tar.gz", version, m.goarch()), nil
 	case "windows":
 		if !supportedArch(m.goarch()) {
 			return "", fmt.Errorf("dixa update is not supported on %s/%s", m.goos(), m.goarch())
@@ -389,7 +400,7 @@ func (m *Manager) currentExecutablePath() (string, error) {
 
 func (m *Manager) validatePlatform() error {
 	switch m.goos() {
-	case "darwin", "windows":
+	case "darwin", "linux", "windows":
 		if supportedArch(m.goarch()) {
 			return nil
 		}
@@ -436,7 +447,12 @@ func (m *Manager) cacheFresh(st state) bool {
 
 func (m *Manager) wrapInPlaceUpdateError(executablePath string, err error) error {
 	if errors.Is(err, os.ErrPermission) {
-		return fmt.Errorf("unable to update %s in place: %w. Reinstall with the latest macOS package or scripts/install.sh instead", executablePath, err)
+		switch m.goos() {
+		case "darwin":
+			return fmt.Errorf("unable to update %s in place: %w. Reinstall with the latest macOS package or scripts/install.sh instead", executablePath, err)
+		default:
+			return fmt.Errorf("unable to update %s in place: %w. Reinstall with the latest release archive or scripts/install.sh instead", executablePath, err)
+		}
 	}
 	return fmt.Errorf("replace current executable %s: %w", executablePath, err)
 }

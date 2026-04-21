@@ -275,6 +275,50 @@ func TestSelfUpdateReplacesBinaryOnDarwin(t *testing.T) {
 	}
 }
 
+func TestSelfUpdateReplacesBinaryOnLinux(t *testing.T) {
+	t.Parallel()
+
+	exeDir := t.TempDir()
+	exePath := filepath.Join(exeDir, "dixa")
+	if err := os.WriteFile(exePath, []byte("old-binary"), 0o755); err != nil {
+		t.Fatalf("write executable: %v", err)
+	}
+
+	archive := mustTarGz(t, "dixa", []byte("new-linux-binary"))
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/" + DefaultRepo + "/releases/latest":
+			_ = json.NewEncoder(w).Encode(map[string]any{"tag_name": "v0.1.3"})
+		case "/" + DefaultRepo + "/releases/download/v0.1.3/dixa_0.1.3_linux_amd64.tar.gz":
+			_, _ = w.Write(archive)
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	manager := newTestManager(server, filepath.Join(t.TempDir(), "update-state.json"), time.Now().UTC())
+	manager.GOOS = "linux"
+	manager.GOARCH = "amd64"
+	manager.ExecutablePath = func() (string, error) { return exePath, nil }
+
+	result, err := manager.SelfUpdate(context.Background(), "0.1.2")
+	if err != nil {
+		t.Fatalf("SelfUpdate: %v", err)
+	}
+	if result.Status != "updated" {
+		t.Fatalf("expected updated status, got %#v", result)
+	}
+
+	got, err := os.ReadFile(exePath)
+	if err != nil {
+		t.Fatalf("read updated executable: %v", err)
+	}
+	if string(got) != "new-linux-binary" {
+		t.Fatalf("unexpected updated binary contents: %q", string(got))
+	}
+}
+
 func TestSelfUpdateBlocksDevBuild(t *testing.T) {
 	t.Parallel()
 
@@ -289,7 +333,7 @@ func TestSelfUpdateRejectsUnsupportedPlatform(t *testing.T) {
 	t.Parallel()
 
 	manager := newTestManager(nil, filepath.Join(t.TempDir(), "update-state.json"), time.Now().UTC())
-	manager.GOOS = "linux"
+	manager.GOOS = "freebsd"
 	manager.GOARCH = "amd64"
 	_, err := manager.SelfUpdate(context.Background(), "0.1.2")
 	if !errors.Is(err, ErrUnsupportedPlatform) {

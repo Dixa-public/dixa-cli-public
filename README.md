@@ -35,6 +35,8 @@ The preferred end-user install path is the native installer attached to each Git
 - macOS: `dixa-<version>-macos-universal.pkg`
 - Windows: `dixa-installer_<version>_windows_<arch>.exe`
 
+Linux is currently distributed as release archives plus the shell installer fallback, not a native installer.
+
 See [docs/installers.md](./docs/installers.md) for platform-specific install behavior and fallback options.
 
 ### Fallback Options
@@ -45,7 +47,7 @@ PowerShell + GitHub (Windows fallback):
 irm https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.ps1 | iex
 ```
 
-Shell + GitHub (macOS fallback):
+Shell + GitHub (macOS/Linux fallback):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.sh | bash
