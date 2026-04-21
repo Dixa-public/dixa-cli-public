@@ -54,6 +54,7 @@ checksum:
 
 release:
   prerelease: auto
+  replace_existing_artifacts: true
   extra_files:
     - glob: .release-extra/*.pkg
     - glob: .release-extra/skill-v*.zip

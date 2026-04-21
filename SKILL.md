@@ -1,3 +1,8 @@
+---
+name: dixa
+description: Use the distributed Dixa CLI in sandboxed AI sessions with bundled install helpers, session-local bootstrapping, and JSON-first command patterns.
+---
+
 # Dixa CLI Skill Guide
 
 Use `dixa` when you want a deterministic command-line interface to the Dixa API.
