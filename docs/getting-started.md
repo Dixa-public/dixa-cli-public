@@ -4,7 +4,7 @@
 
 If you want a broader cookbook with one example for every command group and subcommand, see [command-examples.md](./command-examples.md).
 
-If you are setting up `dixa` inside a sandboxed AI tool, the matching GitHub Release also includes `skill-v<version>.zip`.
+If you are setting up `dixa` inside a sandboxed AI tool, the matching GitHub Release also includes `skill-v<version>.zip`. That bundle includes the skill instructions, local install helpers, and bundled Linux binaries for sandbox environments that cannot download GitHub release assets directly.
 
 ## 1. Install `dixa`
 

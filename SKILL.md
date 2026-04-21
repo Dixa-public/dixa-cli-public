@@ -34,7 +34,7 @@ export DIXA_BIN="$DIXA_SESSION_DIR/bin/dixa"
 
 ### Linux sandboxes
 
-Install `dixa` into a session-local directory with the bundled installer helper:
+Use the bundled Linux release binary first so the skill can work in sandboxes that block GitHub release-asset downloads. Copy the matching binary into a session-local directory before running commands:
 
 ```bash
 export DIXA_VERSION="${DIXA_VERSION:-}"
@@ -43,7 +43,20 @@ export DIXA_TMP_ROOT="${DIXA_TMP_ROOT:-${TMPDIR:-/tmp}}"
 export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$DIXA_TMP_ROOT/dixa-cli-$DIXA_SESSION_LABEL}"
 mkdir -p "$DIXA_SESSION_DIR/bin"
 
-if [[ -n "$DIXA_VERSION" ]]; then
+case "$(uname -m)" in
+  x86_64|amd64) DIXA_LINUX_ARCH="amd64" ;;
+  arm64|aarch64) DIXA_LINUX_ARCH="arm64" ;;
+  *)
+    echo "Unsupported Linux architecture: $(uname -m)" >&2
+    exit 1
+    ;;
+esac
+
+DIXA_BUNDLED_BIN="./bin/linux-$DIXA_LINUX_ARCH/dixa"
+if [[ -f "$DIXA_BUNDLED_BIN" ]]; then
+  chmod +x "$DIXA_BUNDLED_BIN"
+  install -m 0755 "$DIXA_BUNDLED_BIN" "$DIXA_SESSION_DIR/bin/dixa"
+elif [[ -n "$DIXA_VERSION" ]]; then
   INSTALL_DIR="$DIXA_SESSION_DIR/bin" DIXA_VERSION="$DIXA_VERSION" ./scripts/install.sh
 else
   INSTALL_DIR="$DIXA_SESSION_DIR/bin" ./scripts/install.sh
@@ -79,7 +92,7 @@ $env:DIXA_BIN = Join-Path $env:INSTALL_DIR "dixa.exe"
 & $env:DIXA_BIN --version
 ```
 
-If a published release asset is not available in the sandbox, report that the skill is blocked on package installation rather than building the CLI from source.
+If neither the bundled Linux binary nor a published release asset is available in the sandbox, report that the skill is blocked on package installation rather than building the CLI from source.
 
 ## Environment
 

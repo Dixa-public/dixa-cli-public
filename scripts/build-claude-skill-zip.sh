@@ -44,7 +44,6 @@ if windows_marker not in source:
 source = source.replace(
     macos_marker,
     f'export DIXA_VERSION="${{DIXA_VERSION:-{version}}}"',
-    1,
 )
 source = source.replace(
     windows_marker,
@@ -56,8 +55,18 @@ Path(sys.argv[2]).write_text(source)
 PY
 }
 
+build_linux_binary() {
+  local arch="$1"
+  local output="$2"
+  local ldflags="$3"
+
+  CGO_ENABLED=0 GOOS=linux GOARCH="$arch" \
+    go build -trimpath -ldflags "$ldflags" -o "$output" ./cmd/dixa
+}
+
 require_tool python3
 require_tool zip
+require_tool go
 
 case "$OUTPUT_DIR" in
   /*) ;;
@@ -76,11 +85,18 @@ TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/dixa-skill.XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 STAGE_DIR="$TMP_DIR/dixa"
-mkdir -p "$STAGE_DIR/scripts" "$OUTPUT_DIR"
+mkdir -p "$STAGE_DIR/scripts" "$STAGE_DIR/bin/linux-amd64" "$STAGE_DIR/bin/linux-arm64" "$OUTPUT_DIR"
 
 render_skill "$REPO_ROOT/SKILL.md" "$STAGE_DIR/SKILL.md" "$SAFE_VERSION"
 install -m 0755 "$REPO_ROOT/scripts/install.sh" "$STAGE_DIR/scripts/install.sh"
 install -m 0755 "$REPO_ROOT/scripts/install.ps1" "$STAGE_DIR/scripts/install.ps1"
+
+LDFLAGS="-s -w -X github.com/Dixa-public/dixa-cli-public/internal/cli.version=$SAFE_VERSION"
+(
+  cd "$REPO_ROOT"
+  build_linux_binary amd64 "$STAGE_DIR/bin/linux-amd64/dixa" "$LDFLAGS"
+  build_linux_binary arm64 "$STAGE_DIR/bin/linux-arm64/dixa" "$LDFLAGS"
+)
 
 OUTPUT_ZIP="$OUTPUT_DIR/skill-${TAGGED_VERSION}.zip"
 rm -f "$OUTPUT_ZIP"

@@ -72,7 +72,7 @@ Start here for install, auth, first commands, and troubleshooting:
 - [docs/getting-started.md](./docs/getting-started.md)
 - [docs/command-examples.md](./docs/command-examples.md)
 
-If you want a self-contained agent bundle for sandboxed AI workflows, each GitHub Release also includes `skill-v<version>.zip`.
+If you want a self-contained agent bundle for sandboxed AI workflows, each GitHub Release also includes `skill-v<version>.zip`. That bundle ships the skill instructions, local install helpers, and bundled Linux binaries so sandboxed agents do not need to fetch release archives just to start using `dixa`.
 
 ## Quick Start
 
@@ -187,7 +187,7 @@ Only move to `unaggregated-data` when aggregated output is insufficient.
 ## Repo Guide
 
 - [SKILL.md](./SKILL.md): canonical agent-oriented skill guide for sandboxed `dixa` usage
-- `skill-v<version>.zip`: release-bundled copy of the skill with local install scripts and a matching default CLI version
+- `skill-v<version>.zip`: release-bundled copy of the skill with local install scripts, bundled Linux binaries for sandbox use, and a matching default CLI version
 - [docs/getting-started.md](./docs/getting-started.md): setup, auth, examples, and troubleshooting
 - [docs/command-examples.md](./docs/command-examples.md): structured example commands for the full CLI surface
 - [docs/installers.md](./docs/installers.md): default macOS `.pkg` and Windows `.exe` installer flows, plus fallbacks

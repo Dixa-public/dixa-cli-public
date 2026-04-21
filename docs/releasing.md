@@ -93,10 +93,12 @@ Local builds default to `dev` because the version is injected only during releas
    Confirm the archive contains:
 
    - `dixa/SKILL.md`
+   - `dixa/bin/linux-amd64/dixa`
+   - `dixa/bin/linux-arm64/dixa`
    - `dixa/scripts/install.sh`
    - `dixa/scripts/install.ps1`
 
-   Then extract it and confirm the bundled skill defaults to the matching CLI version unless `DIXA_VERSION` is overridden.
+   Then extract it and confirm the bundled skill defaults to the matching CLI version unless `DIXA_VERSION` is overridden, and that Linux bootstrap uses the bundled binary before falling back to release downloads.
 
 ## Snapshot Validation
 
@@ -120,6 +122,8 @@ Validate that:
 - the built binary reports the injected version rather than `dev`
 - `unzip -l .release-extra/skill-v0.1.0.zip` shows:
   - `dixa/SKILL.md`
+  - `dixa/bin/linux-amd64/dixa`
+  - `dixa/bin/linux-arm64/dixa`
   - `dixa/scripts/install.sh`
   - `dixa/scripts/install.ps1`
 
