@@ -39,7 +39,7 @@ See [docs/installers.md](./docs/installers.md) for platform-specific install beh
 
 ### Fallback Options
 
-Homebrew (macOS fallback):
+Homebrew (macOS fallback, once the public tap is enabled):
 
 ```bash
 brew install Dixa-public/tap/dixa

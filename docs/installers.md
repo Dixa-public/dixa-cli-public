@@ -34,7 +34,7 @@ Open a new PowerShell or Command Prompt window after install before running `dix
 
 ## Fallback Options
 
-### Homebrew (macOS fallback)
+### Homebrew (macOS fallback, once the public tap is enabled)
 
 ```bash
 brew install Dixa-public/tap/dixa

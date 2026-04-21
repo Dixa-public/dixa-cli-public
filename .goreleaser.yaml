@@ -1,3 +1,5 @@
+version: 2
+
 project_name: dixa
 
 before:
@@ -45,7 +47,7 @@ archives:
     formats:
       - binary
     name_template: >-
-      {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if eq .Os "windows" }}.exe{{ end }}
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
 
 checksum:
   name_template: checksums.txt
@@ -61,7 +63,7 @@ brews:
     description: Terminal CLI for the Dixa API
     license: MIT
     commit_msg_template: "Brew formula update for {{ .ProjectName }} {{ .Tag }}"
-    skip_upload: auto
+    skip_upload: '{{ if eq .Env.ENABLE_HOMEBREW_TAP_UPLOAD "true" }}auto{{ else }}true{{ end }}'
     test: |
       system "#{bin}/dixa", "--help"
     install: |
@@ -71,7 +73,7 @@ brews:
 release:
   prerelease: auto
   extra_files:
-    - glob: dist/*.pkg
+    - glob: .release-extra/*.pkg
   github:
     owner: Dixa-public
     name: dixa-cli-public

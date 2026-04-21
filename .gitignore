@@ -5,4 +5,5 @@
 /top-agents-last-30d.csv
 bin/
 dist/
+.release-extra/
 coverage.out

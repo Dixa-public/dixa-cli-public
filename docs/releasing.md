@@ -17,9 +17,11 @@ Local builds default to `dev` because the version is injected only during releas
 - Run releases from the real git checkout of `Dixa-public/dixa-cli-public` with full history and tags.
 - Ensure the tap repository exists at `Dixa-public/homebrew-tap`.
 - Ensure the tap repository has a `Formula/` directory on its default branch.
+- Set the repository variable `ENABLE_HOMEBREW_TAP_UPLOAD=true` only when the public tap is ready to receive automated updates.
 - Add a `HOMEBREW_TAP_TOKEN` repository secret in `Dixa-public/dixa-cli-public`.
   - The token must have content write access to `Dixa-public/homebrew-tap`.
   - Do not rely on the default workflow `GITHUB_TOKEN` for cross-repo tap updates.
+  - If the variable or secret is not configured, GitHub Releases still publish normally and Homebrew tap updates are skipped.
 
 ## Release Flow
 
@@ -98,13 +100,14 @@ Local builds default to `dev` because the version is injected only during releas
 From the real git checkout, run:
 
 ```bash
-VERSION=0.1.0 ./scripts/build-macos-pkg.sh
+rm -rf .release-extra
+VERSION=0.1.0 OUTPUT_DIR=.release-extra ./scripts/build-macos-pkg.sh
 goreleaser release --snapshot --clean
 ```
 
 Validate that:
 
-- the macOS `.pkg` is created in `dist/`
+- the macOS `.pkg` is created in `.release-extra/`
 - archives are produced for `darwin/amd64`, `darwin/arm64`, `windows/amd64`, and `windows/arm64`
 - Windows installer executables are produced for `windows/amd64` and `windows/arm64`
 - `checksums.txt` is generated
