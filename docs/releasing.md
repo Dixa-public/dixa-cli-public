@@ -15,13 +15,6 @@ Local builds default to `dev` because the version is injected only during releas
 ## Prerequisites
 
 - Run releases from the real git checkout of `Dixa-public/dixa-cli-public` with full history and tags.
-- Ensure the tap repository exists at `Dixa-public/homebrew-tap`.
-- Ensure the tap repository has a `Formula/` directory on its default branch.
-- Set the repository variable `ENABLE_HOMEBREW_TAP_UPLOAD=true` only when the public tap is ready to receive automated updates.
-- Add a `HOMEBREW_TAP_TOKEN` repository secret in `Dixa-public/dixa-cli-public`.
-  - The token must have content write access to `Dixa-public/homebrew-tap`.
-  - Do not rely on the default workflow `GITHUB_TOKEN` for cross-repo tap updates.
-  - If the variable or secret is not configured, GitHub Releases still publish normally and Homebrew tap updates are skipped.
 
 ## Release Flow
 
@@ -86,15 +79,6 @@ Local builds default to `dev` because the version is injected only during releas
    dixa --help
    ```
 
-8. Verify the Homebrew tap received an updated formula in `Formula/dixa.rb`.
-9. Verify the Homebrew fallback still works:
-
-   ```bash
-   brew install Dixa-public/tap/dixa
-   dixa --version
-   dixa --help
-   ```
-
 ## Snapshot Validation
 
 From the real git checkout, run:
@@ -117,4 +101,3 @@ Validate that:
 ## Prereleases
 
 - Tags such as `v0.1.0-rc1` are published as GitHub prereleases.
-- Homebrew tap uploads are skipped automatically for prerelease tags, so the stable tap formula keeps pointing at the latest stable release.

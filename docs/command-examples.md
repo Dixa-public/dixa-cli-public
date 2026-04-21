@@ -81,17 +81,17 @@ dixa completion --help
 ```
 
 ### `dixa completion bash`
-Install Bash completion on macOS with Homebrew.
+Write Bash completion to a local file you can source or install yourself.
 
 ```bash
-dixa completion bash > "$(brew --prefix)/etc/bash_completion.d/dixa"
+dixa completion bash > ./dixa.bash
 ```
 
 ### `dixa completion zsh`
-Install Zsh completion on macOS with Homebrew.
+Write Zsh completion to a local file you can place on your `fpath`.
 
 ```bash
-dixa completion zsh > "$(brew --prefix)/share/zsh/site-functions/_dixa"
+dixa completion zsh > ./_dixa
 ```
 
 ### `dixa completion fish`

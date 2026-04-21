@@ -52,24 +52,6 @@ archives:
 checksum:
   name_template: checksums.txt
 
-brews:
-  - repository:
-      owner: Dixa-public
-      name: homebrew-tap
-      branch: main
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    directory: Formula
-    homepage: https://github.com/Dixa-public/dixa-cli-public
-    description: Terminal CLI for the Dixa API
-    license: MIT
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} {{ .Tag }}"
-    skip_upload: '{{ if eq .Env.ENABLE_HOMEBREW_TAP_UPLOAD "true" }}auto{{ else }}true{{ end }}'
-    test: |
-      system "#{bin}/dixa", "--help"
-    install: |
-      bin.install "dixa"
-      generate_completions_from_executable(bin/"dixa", "completion")
-
 release:
   prerelease: auto
   extra_files:

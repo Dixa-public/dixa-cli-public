@@ -6,14 +6,17 @@ This skill should use the distributed CLI, not a source build. Because sandbox s
 
 ## Session Bootstrap
 
-### macOS or brew-enabled sandboxes
+### macOS sandboxes
 
-Install the current stable release from the Homebrew tap:
+Install the current stable release into a session-local directory:
 
 ```bash
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install Dixa-public/tap/dixa
-export DIXA_BIN="${DIXA_BIN:-$(brew --prefix)/bin/dixa}"
+export DIXA_VERSION="${DIXA_VERSION:-0.1.1}"
+export DIXA_SESSION_DIR="${DIXA_SESSION_DIR:-$TMPDIR/dixa-cli-$DIXA_VERSION}"
+mkdir -p "$DIXA_SESSION_DIR/bin"
+curl -fsSL https://raw.githubusercontent.com/Dixa-public/dixa-cli-public/main/scripts/install.sh | \
+  INSTALL_DIR="$DIXA_SESSION_DIR/bin" DIXA_VERSION="$DIXA_VERSION" bash
+export DIXA_BIN="$DIXA_SESSION_DIR/bin/dixa"
 "$DIXA_BIN" --version
 ```
 
@@ -41,7 +44,7 @@ $env:DIXA_BIN = Join-Path $DixaDir "dixa.exe"
 & $env:DIXA_BIN --version
 ```
 
-If neither Homebrew nor a published Windows release asset is available in the sandbox, report that the skill is blocked on package installation rather than building the CLI from source.
+If a published release asset is not available in the sandbox, report that the skill is blocked on package installation rather than building the CLI from source.
 
 ## Environment
 

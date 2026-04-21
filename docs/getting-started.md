@@ -17,12 +17,6 @@ For installer behavior details and platform-specific notes, see [installers.md](
 
 ### Fallback options
 
-Homebrew (macOS fallback, once the public tap is enabled):
-
-```bash
-brew install Dixa-public/tap/dixa
-```
-
 PowerShell + GitHub (Windows fallback):
 
 ```powershell

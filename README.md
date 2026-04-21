@@ -39,12 +39,6 @@ See [docs/installers.md](./docs/installers.md) for platform-specific install beh
 
 ### Fallback Options
 
-Homebrew (macOS fallback, once the public tap is enabled):
-
-```bash
-brew install Dixa-public/tap/dixa
-```
-
 PowerShell + GitHub (Windows fallback):
 
 ```powershell
@@ -179,7 +173,7 @@ Only move to `unaggregated-data` when aggregated output is insufficient.
 - [docs/command-examples.md](./docs/command-examples.md): structured example commands for the full CLI surface
 - [docs/installers.md](./docs/installers.md): default macOS `.pkg` and Windows `.exe` installer flows, plus fallbacks
 - [docs/parity-matrix.md](./docs/parity-matrix.md): generated surface parity table
-- [docs/releasing.md](./docs/releasing.md): GitHub Releases, native installers, and Homebrew release flow
+- [docs/releasing.md](./docs/releasing.md): GitHub Releases and native installer release flow
 
 ## Development
 
